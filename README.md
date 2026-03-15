@@ -11,8 +11,8 @@ Based on [Geoffrey Huntley's Ralph pattern](https://ghuntley.com/ralph/).
 ## Prerequisites
 
 - One of the following AI coding tools installed and authenticated:
-  - [Amp CLI](https://ampcode.com) (default)
-  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`npm install -g @anthropic-ai/claude-code`)
+  - [Amp CLI](https://ampcode.com)
+  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`npm install -g @anthropic-ai/claude-code`) (default)
 - `jq` installed (`brew install jq` on macOS)
 - A git repository for your project
 
@@ -110,11 +110,11 @@ This creates `prd.json` with user stories structured for autonomous execution.
 ### 3. Run Ralph
 
 ```bash
-# Using Amp (default)
+# Using Claude Code (default)
 ./scripts/ralph/ralph.sh [max_iterations]
 
-# Using Claude Code
-./scripts/ralph/ralph.sh --tool claude [max_iterations]
+# Using Amp
+./scripts/ralph/ralph.sh --tool amp [max_iterations]
 ```
 
 Default is 10 iterations. Use `--tool amp` or `--tool claude` to select your AI coding tool.
@@ -142,7 +142,7 @@ Ralph will:
 | `skills/prd/` | Skill for generating PRDs (works with Amp and Claude Code) |
 | `skills/ralph/` | Skill for converting PRDs to JSON (works with Amp and Claude Code) |
 | `.claude-plugin/` | Plugin manifest for Claude Code marketplace discovery |
-| `flowchart/` | Interactive visualization of how Ralph works |
+| `FLOWCHART.md` | Detailed documentation of the interactive flowchart visualization |
 
 ## Flowchart
 
@@ -150,13 +150,7 @@ Ralph will:
 
 **[View Interactive Flowchart](https://snarktank.github.io/ralph/)** - Click through to see each step with animations.
 
-The `flowchart/` directory contains the source code. To run locally:
-
-```bash
-cd flowchart
-npm install
-npm run dev
-```
+See [FLOWCHART.md](FLOWCHART.md) for a detailed breakdown of the flowchart's architecture, components, and design.
 
 ## Critical Concepts
 
