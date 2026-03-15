@@ -55,6 +55,12 @@ else
   require_cmd claude
 fi
 
+# Strip ralph's own .git so commits go to the parent project
+if [ -d "$SCRIPT_DIR/.git" ]; then
+  echo "Stripping .git from ralph directory (commits should go to parent project)"
+  rm -rf "$SCRIPT_DIR/.git"
+fi
+
 if [[ "$TOOL" == "amp" && ! -f "$SCRIPT_DIR/prompt.md" ]]; then
   echo "Error: Missing prompt file: $SCRIPT_DIR/prompt.md"
   exit 1
