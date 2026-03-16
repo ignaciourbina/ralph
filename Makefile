@@ -1,7 +1,7 @@
 # Ralph - Autonomous AI Agent Loop
 # Run `make help` for available commands
 
-.PHONY: help run run-claude run-amp status reset clean
+.PHONY: help run run-claude run-dangerous run-amp status reset clean
 
 SHELL := /bin/bash
 RALPH_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -10,6 +10,8 @@ PROGRESS_FILE := $(RALPH_DIR)/progress.txt
 
 # Default iterations
 N ?= 27
+# Project directory (defaults to parent of ralph/)
+PROJECT_DIR ?= $(shell dirname $(RALPH_DIR))
 
 help:
 	@echo ""
@@ -18,10 +20,11 @@ help:
 	@echo "╚═══════════════════════════════════════════════════╝"
 	@echo ""
 	@echo "  Usage:"
-	@echo "    make run              Run Ralph with Claude Code (default)"
-	@echo "    make run N=10         Run with custom max iterations"
-	@echo "    make run-amp          Run Ralph with Amp"
-	@echo "    make run-amp N=5      Run Amp with custom iterations"
+	@echo "    make run                          Run with Claude (safe mode, default)"
+	@echo "    make run N=10                     Custom max iterations"
+	@echo "    make run PROJECT_DIR=/path/to/dir Target a specific project"
+	@echo "    make run-dangerous                Run with --dangerously-skip-permissions"
+	@echo "    make run-amp                      Run with Amp"
 	@echo ""
 	@echo "  Status:"
 	@echo "    make status           Show PRD progress"
@@ -32,9 +35,13 @@ help:
 	@echo "    make clean            Remove progress + archive"
 	@echo ""
 
-# Primary target: run with Claude Code
+# Primary target: run with Claude Code (safe mode — uses settings.json + allowedTools)
 run run-claude:
-	@$(RALPH_DIR)/ralph.sh --tool claude $(N)
+	@$(RALPH_DIR)/ralph.sh --tool claude --project-dir $(PROJECT_DIR) $(N)
+
+# Dangerous mode: bypass all permission checks
+run-dangerous:
+	@$(RALPH_DIR)/ralph.sh --tool claude --dangerous --project-dir $(PROJECT_DIR) $(N)
 
 # Alternative: run with Amp
 run-amp:

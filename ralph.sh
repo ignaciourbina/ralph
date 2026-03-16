@@ -1,12 +1,14 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool amp|claude] [max_iterations]
+# Usage: ./ralph.sh [--tool amp|claude] [--project-dir PATH] [--dangerous] [max_iterations]
 
 set -e
 
 # Parse arguments
 TOOL="claude"  # Default to claude for local environment
 MAX_ITERATIONS=10
+DANGEROUS=false
+PROJECT_DIR=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -16,6 +18,18 @@ while [[ $# -gt 0 ]]; do
       ;;
     --tool=*)
       TOOL="${1#*=}"
+      shift
+      ;;
+    --project-dir)
+      PROJECT_DIR="$2"
+      shift 2
+      ;;
+    --project-dir=*)
+      PROJECT_DIR="${1#*=}"
+      shift
+      ;;
+    --dangerous)
+      DANGEROUS=true
       shift
       ;;
     *)
@@ -60,6 +74,37 @@ if [ -d "$SCRIPT_DIR/.git" ]; then
   echo "Stripping .git from ralph directory (commits should go to parent project)"
   rm -rf "$SCRIPT_DIR/.git"
 fi
+
+# Resolve project directory: explicit flag > parent of ralph/
+PROJECT_DIR="${PROJECT_DIR:-$(dirname "$SCRIPT_DIR")}"
+PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"  # resolve to absolute path
+
+if [ ! -d "$PROJECT_DIR" ]; then
+  echo "Error: Project directory does not exist: $PROJECT_DIR"
+  exit 1
+fi
+
+# Initialize .claude/settings.json for safe mode (default)
+if [[ "$DANGEROUS" == false && "$TOOL" == "claude" ]]; then
+  mkdir -p "$PROJECT_DIR/.claude"
+  cat > "$PROJECT_DIR/.claude/settings.json" <<'SETTINGS'
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash"
+    ]
+  }
+}
+SETTINGS
+  echo "Initialized .claude/settings.json in $PROJECT_DIR"
+fi
+
+# Change to project directory so Claude scopes to it via .git discovery
+cd "$PROJECT_DIR"
+echo "Working directory: $(pwd)"
 
 if [[ "$TOOL" == "amp" && ! -f "$SCRIPT_DIR/prompt.md" ]]; then
   echo "Error: Missing prompt file: $SCRIPT_DIR/prompt.md"
@@ -111,7 +156,9 @@ if [ ! -f "$PROGRESS_FILE" ]; then
   echo "---" >> "$PROGRESS_FILE"
 fi
 
-echo "Starting Ralph - Tool: $TOOL - Max iterations: $MAX_ITERATIONS"
+MODE="safe"
+[[ "$DANGEROUS" == true ]] && MODE="dangerous"
+echo "Starting Ralph - Tool: $TOOL - Mode: $MODE - Max iterations: $MAX_ITERATIONS"
 
 for i in $(seq 1 $MAX_ITERATIONS); do
   echo ""
@@ -122,9 +169,12 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   # Run the selected tool with the ralph prompt
   if [[ "$TOOL" == "amp" ]]; then
     OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
-  else
-    # Claude Code: stream output so long tasks don't look idle
+  elif [[ "$DANGEROUS" == true ]]; then
+    # Dangerous mode: bypass all permission checks
     OUTPUT=$(claude --dangerously-skip-permissions --print --verbose --output-format stream-json --include-partial-messages < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+  else
+    # Safe mode: use settings.json + allowedTools for headless auto-approval
+    OUTPUT=$(claude --print --verbose --output-format stream-json --include-partial-messages --allowedTools "Read,Edit,Write,Bash" < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
   fi
   
   # Check for completion signal
