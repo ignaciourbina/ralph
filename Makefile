@@ -1,7 +1,7 @@
 # Ralph - Autonomous AI Agent Loop
 # Run `make help` for available commands
 
-.PHONY: help run run-claude run-dangerous run-amp status reset clean
+.PHONY: help run run-claude run-dangerous run-amp run-copilot status reset clean
 
 SHELL := /bin/bash
 RALPH_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -25,6 +25,7 @@ help:
 	@echo "    make run PROJECT_DIR=/path/to/dir Target a specific project"
 	@echo "    make run-dangerous                Run with --dangerously-skip-permissions"
 	@echo "    make run-amp                      Run with Amp"
+	@echo "    make run-copilot                  Run with GitHub Copilot"
 	@echo ""
 	@echo "  Status:"
 	@echo "    make status           Show PRD progress"
@@ -46,6 +47,10 @@ run-dangerous:
 # Alternative: run with Amp
 run-amp:
 	@$(RALPH_DIR)/ralph.sh --tool amp $(N)
+
+# Alternative: run with GitHub Copilot
+run-copilot:
+	@$(RALPH_DIR)/ralph.sh --tool copilot --project-dir $(PROJECT_DIR) $(N)
 
 # Show PRD completion status
 status:

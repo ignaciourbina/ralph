@@ -89,19 +89,22 @@ fi
 # Initialize .claude/settings.json for safe mode (default)
 if [[ "$DANGEROUS" == false && "$TOOL" == "claude" ]]; then
   mkdir -p "$PROJECT_DIR/.claude"
-  cat > "$PROJECT_DIR/.claude/settings.json" <<'SETTINGS'
+  cat > "$PROJECT_DIR/.claude/settings.local.json" <<'SETTINGS'
 {
   "permissions": {
     "allow": [
-      "Read",
-      "Edit",
-      "Write",
-      "Bash"
+      "Bash(*)",
+      "Write(*)",
+      "Read(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)"
     ]
   }
 }
+
 SETTINGS
-  echo "Initialized .claude/settings.json in $PROJECT_DIR"
+  echo "Initialized .claude/settings.local.json in $PROJECT_DIR"
 fi
 
 # Change to project directory so Claude scopes to it via .git discovery
@@ -181,7 +184,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     if [[ "$DANGEROUS" == true ]]; then
       OUTPUT=$(copilot -p "$(cat "$SCRIPT_DIR/COPILOT.md")" --allow-all 2>&1 | tee /dev/stderr) || true
     else
-      OUTPUT=$(copilot -p "$(cat "$SCRIPT_DIR/COPILOT.md")" --allow-tool='read' --allow-tool='write' --allow-tool='edit' --allow-tool='shell(git:*)' --allow-tool='shell(npx:*)' --allow-tool='shell(node:*)' --allow-tool='shell(cat:*)' --allow-tool='shell(ls:*)' --allow-tool='shell(mkdir:*)' 2>&1 | tee /dev/stderr) || true
+      OUTPUT=$(copilot -p "$(cat "$SCRIPT_DIR/COPILOT.md")" --allow-all-tools 2>&1 | tee /dev/stderr) || true
     fi
   elif [[ "$DANGEROUS" == true ]]; then
     # Dangerous mode: bypass all permission checks
