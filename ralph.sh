@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool amp|claude] [--project-dir PATH] [--dangerous] [max_iterations]
+# Usage: ./ralph.sh [--tool amp|claude|copilot] [--project-dir PATH] [--dangerous] [max_iterations]
 
 set -e
 
@@ -43,8 +43,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate tool choice
-if [[ "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
-  echo "Error: Invalid tool '$TOOL'. Must be 'amp' or 'claude'."
+if [[ "$TOOL" != "amp" && "$TOOL" != "claude" && "$TOOL" != "copilot" ]]; then
+  echo "Error: Invalid tool '$TOOL'. Must be 'amp', 'claude', or 'copilot'."
   exit 1
 fi
 
@@ -65,6 +65,8 @@ LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
 require_cmd jq
 if [[ "$TOOL" == "amp" ]]; then
   require_cmd amp
+elif [[ "$TOOL" == "copilot" ]]; then
+  require_cmd copilot
 else
   require_cmd claude
 fi
@@ -113,6 +115,11 @@ fi
 
 if [[ "$TOOL" == "claude" && ! -f "$SCRIPT_DIR/CLAUDE.md" ]]; then
   echo "Error: Missing prompt file: $SCRIPT_DIR/CLAUDE.md"
+  exit 1
+fi
+
+if [[ "$TOOL" == "copilot" && ! -f "$SCRIPT_DIR/COPILOT.md" ]]; then
+  echo "Error: Missing prompt file: $SCRIPT_DIR/COPILOT.md"
   exit 1
 fi
 
@@ -169,6 +176,13 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   # Run the selected tool with the ralph prompt
   if [[ "$TOOL" == "amp" ]]; then
     OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
+  elif [[ "$TOOL" == "copilot" ]]; then
+    # Copilot CLI mode
+    if [[ "$DANGEROUS" == true ]]; then
+      OUTPUT=$(copilot -p "$(cat "$SCRIPT_DIR/COPILOT.md")" --allow-all 2>&1 | tee /dev/stderr) || true
+    else
+      OUTPUT=$(copilot -p "$(cat "$SCRIPT_DIR/COPILOT.md")" --allow-tool='read' --allow-tool='write' --allow-tool='edit' --allow-tool='shell(git:*)' --allow-tool='shell(npx:*)' --allow-tool='shell(node:*)' --allow-tool='shell(cat:*)' --allow-tool='shell(ls:*)' --allow-tool='shell(mkdir:*)' 2>&1 | tee /dev/stderr) || true
+    fi
   elif [[ "$DANGEROUS" == true ]]; then
     # Dangerous mode: bypass all permission checks
     OUTPUT=$(claude --dangerously-skip-permissions --print --verbose --output-format stream-json --include-partial-messages < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
