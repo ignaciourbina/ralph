@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool amp|claude|copilot] [--project-dir PATH] [--dangerous] [max_iterations]
+# Usage: ./ralph.sh [--tool amp|claude|copilot|codex] [--project-dir PATH] [--dangerous] [max_iterations]
 
 set -e
 
@@ -43,8 +43,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate tool choice
-if [[ "$TOOL" != "amp" && "$TOOL" != "claude" && "$TOOL" != "copilot" ]]; then
-  echo "Error: Invalid tool '$TOOL'. Must be 'amp', 'claude', or 'copilot'."
+if [[ "$TOOL" != "amp" && "$TOOL" != "claude" && "$TOOL" != "copilot" && "$TOOL" != "codex" ]]; then
+  echo "Error: Invalid tool '$TOOL'. Must be 'amp', 'claude', 'copilot', or 'codex'."
   exit 1
 fi
 
@@ -67,6 +67,8 @@ if [[ "$TOOL" == "amp" ]]; then
   require_cmd amp
 elif [[ "$TOOL" == "copilot" ]]; then
   require_cmd copilot
+elif [[ "$TOOL" == "codex" ]]; then
+  require_cmd codex
 else
   require_cmd claude
 fi
@@ -107,6 +109,11 @@ SETTINGS
   echo "Initialized .claude/settings.local.json in $PROJECT_DIR"
 fi
 
+# Initialize .codex/config.toml for safe mode to match init-codex repos
+if [[ "$DANGEROUS" == false && "$TOOL" == "codex" ]]; then
+  bash "$SCRIPT_DIR/tools/init-codex.sh" "$PROJECT_DIR"
+fi
+
 # Change to project directory so Claude scopes to it via .git discovery
 cd "$PROJECT_DIR"
 echo "Working directory: $(pwd)"
@@ -123,6 +130,11 @@ fi
 
 if [[ "$TOOL" == "copilot" && ! -f "$SCRIPT_DIR/COPILOT.md" ]]; then
   echo "Error: Missing prompt file: $SCRIPT_DIR/COPILOT.md"
+  exit 1
+fi
+
+if [[ "$TOOL" == "codex" && ! -f "$SCRIPT_DIR/AGENTS.md" ]]; then
+  echo "Error: Missing prompt file: $SCRIPT_DIR/AGENTS.md"
   exit 1
 fi
 
@@ -186,6 +198,24 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     else
       OUTPUT=$(copilot -p "$(cat "$SCRIPT_DIR/COPILOT.md")" --allow-all-tools 2>&1 | tee /dev/stderr) || true
     fi
+  elif [[ "$TOOL" == "codex" ]]; then
+    LAST_MSG=$(mktemp)
+    if [[ "$DANGEROUS" == true ]]; then
+      OUTPUT=$(codex exec \
+        --cd "$PROJECT_DIR" \
+        --dangerously-bypass-approvals-and-sandbox \
+        --output-last-message "$LAST_MSG" \
+        < "$SCRIPT_DIR/AGENTS.md" 2>&1 | tee /dev/stderr) || true
+    else
+      OUTPUT=$(codex exec \
+        --cd "$PROJECT_DIR" \
+        --sandbox workspace-write \
+        --output-last-message "$LAST_MSG" \
+        < "$SCRIPT_DIR/AGENTS.md" 2>&1 | tee /dev/stderr) || true
+    fi
+    LAST_OUTPUT=$(cat "$LAST_MSG" 2>/dev/null || true)
+    OUTPUT="$OUTPUT"$'\n'"$LAST_OUTPUT"
+    rm -f "$LAST_MSG"
   elif [[ "$DANGEROUS" == true ]]; then
     # Dangerous mode: bypass all permission checks
     OUTPUT=$(claude --dangerously-skip-permissions --print --verbose --output-format stream-json --include-partial-messages < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true

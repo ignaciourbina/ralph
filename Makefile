@@ -1,7 +1,7 @@
 # Ralph - Autonomous AI Agent Loop
 # Run `make help` for available commands
 
-.PHONY: help run run-claude run-dangerous run-amp run-copilot status reset clean
+.PHONY: help run run-claude run-dangerous run-amp run-copilot run-codex run-codex-dangerous init-codex install-skills install-skills-claude install-skills-codex status reset clean
 
 SHELL := /bin/bash
 RALPH_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -21,11 +21,20 @@ help:
 	@echo ""
 	@echo "  Usage:"
 	@echo "    make run                          Run with Claude (safe mode, default)"
+	@echo "    make run-claude                   Run with Claude (safe mode)"
 	@echo "    make run N=10                     Custom max iterations"
 	@echo "    make run PROJECT_DIR=/path/to/dir Target a specific project"
-	@echo "    make run-dangerous                Run with --dangerously-skip-permissions"
+	@echo "    make run-dangerous                Run Claude with --dangerously-skip-permissions"
 	@echo "    make run-amp                      Run with Amp"
 	@echo "    make run-copilot                  Run with GitHub Copilot"
+	@echo "    make run-codex                    Run with Codex"
+	@echo "    make run-codex-dangerous          Run Codex without sandbox/approval checks"
+	@echo ""
+	@echo "  Setup:"
+	@echo "    make init-codex                   Create .codex config/rules in PROJECT_DIR"
+	@echo "    make install-skills               Copy skills to ~/.claude/skills and ~/.codex/skills"
+	@echo "    make install-skills-claude        Copy skills to ~/.claude/skills"
+	@echo "    make install-skills-codex         Copy skills to ~/.codex/skills"
 	@echo ""
 	@echo "  Status:"
 	@echo "    make status           Show PRD progress"
@@ -51,6 +60,27 @@ run-amp:
 # Alternative: run with GitHub Copilot
 run-copilot:
 	@$(RALPH_DIR)/ralph.sh --tool copilot --project-dir $(PROJECT_DIR) $(N)
+
+# Alternative: run with Codex
+run-codex:
+	@$(RALPH_DIR)/ralph.sh --tool codex --project-dir $(PROJECT_DIR) $(N)
+
+run-codex-dangerous:
+	@$(RALPH_DIR)/ralph.sh --tool codex --dangerous --project-dir $(PROJECT_DIR) $(N)
+
+# Initialize project-local Codex config in the style of init-codex
+init-codex:
+	@bash $(RALPH_DIR)/tools/init-codex.sh $(PROJECT_DIR)
+
+# Install skills to both Claude and Codex homes
+install-skills:
+	@bash $(RALPH_DIR)/tools/install-skills.sh all
+
+install-skills-claude:
+	@bash $(RALPH_DIR)/tools/install-skills.sh claude
+
+install-skills-codex:
+	@bash $(RALPH_DIR)/tools/install-skills.sh codex
 
 # Show PRD completion status
 status:
