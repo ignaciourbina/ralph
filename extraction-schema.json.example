@@ -1,0 +1,118 @@
+{
+  "reviewGoal": "Understand mechanisms of opinion change in deliberative mini-publics",
+  "reviewType": "empirical",
+  "fields": [
+    {
+      "name": "title",
+      "section": "core",
+      "description": "Full paper title",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "authors",
+      "section": "core",
+      "description": "List of author names",
+      "type": "array",
+      "items": "string",
+      "required": true
+    },
+    {
+      "name": "year",
+      "section": "core",
+      "description": "Publication year",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "journal_or_venue",
+      "section": "core",
+      "description": "Journal name, conference, or publisher",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "doi",
+      "section": "core",
+      "description": "DOI if available",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "abstract",
+      "section": "core",
+      "description": "Paper abstract",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "research_questions",
+      "section": "research_design",
+      "description": "Stated research questions or hypotheses",
+      "type": "array",
+      "items": "string",
+      "required": true
+    },
+    {
+      "name": "methodology",
+      "section": "research_design",
+      "description": "Research method: experiment, survey, case study, simulation, etc.",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "sample_description",
+      "section": "research_design",
+      "description": "Who was studied and sample size",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "theoretical_framework",
+      "section": "theoretical",
+      "description": "Theory of deliberation or opinion change the paper uses or proposes",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "mechanisms",
+      "section": "theoretical",
+      "description": "Causal mechanisms proposed or tested for opinion change",
+      "type": "array",
+      "items": "string",
+      "required": true
+    },
+    {
+      "name": "key_findings",
+      "section": "findings",
+      "description": "Main results with brief direct quotes and section references",
+      "type": "array",
+      "items": "string",
+      "required": true
+    },
+    {
+      "name": "effect_sizes",
+      "section": "findings",
+      "description": "Quantitative effect sizes if reported",
+      "type": "array",
+      "items": "string",
+      "required": false
+    },
+    {
+      "name": "limitations",
+      "section": "findings",
+      "description": "Limitations stated by the authors",
+      "type": "array",
+      "items": "string",
+      "required": false
+    },
+    {
+      "name": "cited_papers_of_interest",
+      "section": "connections",
+      "description": "Key references that appear relevant to this review topic",
+      "type": "array",
+      "items": "string",
+      "required": false
+    }
+  ]
+}

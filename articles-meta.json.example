@@ -1,0 +1,25 @@
+{
+  "corpus": "Deliberative Democracy Review",
+  "pdfDirectory": "pdfs",
+  "scannedAt": "2025-01-15T10:30:00Z",
+  "articles": [
+    {
+      "id": "ART-001",
+      "path": "pdfs/smith-2020-deliberation-and-opinion-change.pdf",
+      "provisionalTitle": "smith-2020-deliberation-and-opinion-change",
+      "processed": false
+    },
+    {
+      "id": "ART-002",
+      "path": "pdfs/habermas-1996-between-facts-and-norms.pdf",
+      "provisionalTitle": "habermas-1996-between-facts-and-norms",
+      "processed": false
+    },
+    {
+      "id": "ART-003",
+      "path": "pdfs/fishkin-2009-when-the-people-speak.pdf",
+      "provisionalTitle": "fishkin-2009-when-the-people-speak",
+      "processed": true
+    }
+  ]
+}

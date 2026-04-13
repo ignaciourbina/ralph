@@ -1,0 +1,16 @@
+# Runtime artifacts
+articles-meta.json
+extractions.json
+extraction-schema.json
+progress.txt
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
