@@ -12,5 +12,8 @@ __pycache__/
 # Claude
 .claude/
 
+# Codex
+.codex/
+
 # OS
 .DS_Store

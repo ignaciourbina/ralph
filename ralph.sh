@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Lit Rev - Structured extraction loop for academic papers
-# Usage: ./ralph.sh [--tool claude] [--project-dir PATH] [--dangerous] [max_iterations]
+# Usage: ./ralph.sh [--tool claude|codex] [--project-dir PATH] [--dangerous] [max_iterations]
 
 set -e
 
@@ -40,8 +40,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$TOOL" != "claude" ]]; then
-  echo "Error: ralph-lit-rev currently only supports claude. Got '$TOOL'."
+if [[ "$TOOL" != "claude" && "$TOOL" != "codex" ]]; then
+  echo "Error: ralph-lit-rev currently only supports claude or codex. Got '$TOOL'."
   exit 1
 fi
 
@@ -60,7 +60,11 @@ PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 
 # Preflight
 require_cmd jq
-require_cmd claude
+if [[ "$TOOL" == "codex" ]]; then
+  require_cmd codex
+else
+  require_cmd claude
+fi
 
 # Check required files
 if [ ! -f "$SCHEMA_FILE" ]; then
@@ -95,8 +99,13 @@ if [ ! -d "$PROJECT_DIR" ]; then
   exit 1
 fi
 
-# Initialize .claude/settings.local.json for safe mode
-if [[ "$DANGEROUS" == false ]]; then
+CODEX_GIT_FLAG=""
+if [[ "$TOOL" == "codex" && ! -d "$PROJECT_DIR/.git" ]]; then
+  CODEX_GIT_FLAG="--skip-git-repo-check"
+fi
+
+# Initialize .claude/settings.local.json for safe Claude mode
+if [[ "$DANGEROUS" == false && "$TOOL" == "claude" ]]; then
   mkdir -p "$PROJECT_DIR/.claude"
   cat > "$PROJECT_DIR/.claude/settings.local.json" <<'SETTINGS'
 {
@@ -115,11 +124,21 @@ SETTINGS
   echo "Initialized .claude/settings.local.json in $PROJECT_DIR"
 fi
 
+# Initialize .codex/config.toml for safe Codex mode
+if [[ "$DANGEROUS" == false && "$TOOL" == "codex" ]]; then
+  bash "$SCRIPT_DIR/tools/init-codex.sh" "$PROJECT_DIR"
+fi
+
 cd "$PROJECT_DIR"
 echo "Working directory: $(pwd)"
 
-if [ ! -f "$SCRIPT_DIR/CLAUDE.md" ]; then
+if [[ "$TOOL" == "claude" && ! -f "$SCRIPT_DIR/CLAUDE.md" ]]; then
   echo "Error: Missing prompt file: $SCRIPT_DIR/CLAUDE.md"
+  exit 1
+fi
+
+if [[ "$TOOL" == "codex" && ! -f "$SCRIPT_DIR/AGENTS.md" ]]; then
+  echo "Error: Missing prompt file: $SCRIPT_DIR/AGENTS.md"
   exit 1
 fi
 
@@ -161,7 +180,27 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  Articles remaining: $REMAINING of $TOTAL"
   echo "==============================================================="
 
-  if [[ "$DANGEROUS" == true ]]; then
+  if [[ "$TOOL" == "codex" ]]; then
+    LAST_MSG=$(mktemp)
+    if [[ "$DANGEROUS" == true ]]; then
+      OUTPUT=$(codex exec \
+        --cd "$PROJECT_DIR" \
+        $CODEX_GIT_FLAG \
+        --dangerously-bypass-approvals-and-sandbox \
+        --output-last-message "$LAST_MSG" \
+        < "$SCRIPT_DIR/AGENTS.md" 2>&1 | tee /dev/stderr) || true
+    else
+      OUTPUT=$(codex exec \
+        --cd "$PROJECT_DIR" \
+        $CODEX_GIT_FLAG \
+        --sandbox workspace-write \
+        --output-last-message "$LAST_MSG" \
+        < "$SCRIPT_DIR/AGENTS.md" 2>&1 | tee /dev/stderr) || true
+    fi
+    LAST_OUTPUT=$(cat "$LAST_MSG" 2>/dev/null || true)
+    OUTPUT="$OUTPUT"$'\n'"$LAST_OUTPUT"
+    rm -f "$LAST_MSG"
+  elif [[ "$DANGEROUS" == true ]]; then
     OUTPUT=$(claude --dangerously-skip-permissions --print --verbose \
       --output-format stream-json --include-partial-messages \
       < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true

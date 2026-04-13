@@ -1,7 +1,7 @@
 # Ralph Lit Rev - Structured extraction from academic papers
 # Run `make help` for available commands
 
-.PHONY: help setup run run-dangerous status progress prepare reset clean
+.PHONY: help setup install install-claude install-codex init-codex run run-dangerous run-codex run-codex-dangerous status progress prepare reset clean
 
 SHELL := /bin/bash
 RALPH_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -22,6 +22,10 @@ help:
 	@echo ""
 	@echo "  Setup:"
 	@echo "    make setup                Set up Python venv and dependencies"
+	@echo "    make install              Copy skills to parent project for Claude Code and Codex"
+	@echo "    make install-claude       Copy skills to parent project for Claude Code"
+	@echo "    make install-codex        Copy skills to parent project for Codex"
+	@echo "    make init-codex           Create .codex config/rules in PROJECT_DIR"
 	@echo ""
 	@echo "  Workflow:"
 	@echo "    1. Run /schema skill      Design extraction schema interactively"
@@ -32,6 +36,8 @@ help:
 	@echo "    make run                  Run extraction loop (safe mode)"
 	@echo "    make run N=20             Custom max iterations"
 	@echo "    make run-dangerous        Run with --dangerously-skip-permissions"
+	@echo "    make run-codex            Run extraction loop with Codex"
+	@echo "    make run-codex-dangerous  Run Codex without sandbox/approval checks"
 	@echo ""
 	@echo "  Status:"
 	@echo "    make status               Show extraction progress"
@@ -45,11 +51,29 @@ help:
 setup:
 	@bash $(RALPH_DIR)/tools/setup.sh
 
+install:
+	@bash $(RALPH_DIR)/install-skills.sh
+
+install-claude:
+	@bash $(RALPH_DIR)/install-skills.sh claude
+
+install-codex:
+	@bash $(RALPH_DIR)/install-skills.sh codex
+
+init-codex:
+	@bash $(RALPH_DIR)/tools/init-codex.sh $(PROJECT_DIR)
+
 run:
 	@$(RALPH_DIR)/ralph.sh --project-dir $(PROJECT_DIR) $(N)
 
 run-dangerous:
 	@$(RALPH_DIR)/ralph.sh --dangerous --project-dir $(PROJECT_DIR) $(N)
+
+run-codex:
+	@$(RALPH_DIR)/ralph.sh --tool codex --project-dir $(PROJECT_DIR) $(N)
+
+run-codex-dangerous:
+	@$(RALPH_DIR)/ralph.sh --tool codex --dangerous --project-dir $(PROJECT_DIR) $(N)
 
 status:
 	@if [ ! -f $(ARTICLES_FILE) ]; then \
