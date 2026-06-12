@@ -10,8 +10,15 @@ PROGRESS_FILE := $(RALPH_DIR)/progress.txt
 
 # Default iterations
 N ?= 27
+# Claude model for non-interactive runs
+MODEL ?= claude-fable-5
 # Project directory (defaults to parent of ralph/)
 PROJECT_DIR ?= $(shell dirname $(RALPH_DIR))
+
+# Guard for targets that need an existing PRD
+define require_prd
+	@test -f $(PRD_FILE) || { echo "Error: $(PRD_FILE) not found. Run your prd/sprint prep first."; exit 1; }
+endef
 
 help:
 	@echo ""
@@ -23,6 +30,7 @@ help:
 	@echo "    make run                          Run with Claude (safe mode, default)"
 	@echo "    make run-claude                   Run with Claude (safe mode)"
 	@echo "    make run N=10                     Custom max iterations"
+	@echo "    make run MODEL=claude-opus-4-8    Override Claude model (default: claude-fable-5)"
 	@echo "    make run PROJECT_DIR=/path/to/dir Target a specific project"
 	@echo "    make run-dangerous                Run Claude with --dangerously-skip-permissions"
 	@echo "    make run-amp                      Run with Amp"
@@ -45,13 +53,13 @@ help:
 	@echo "    make clean            Remove progress + archive"
 	@echo ""
 
-# Primary target: run with Claude Code (safe mode — uses settings.json + allowedTools)
+# Primary target: run with Claude Code (safe mode — uses settings.local.json + allowedTools)
 run run-claude:
-	@$(RALPH_DIR)/ralph.sh --tool claude --project-dir $(PROJECT_DIR) $(N)
+	@$(RALPH_DIR)/ralph.sh --tool claude --model $(MODEL) --project-dir $(PROJECT_DIR) $(N)
 
 # Dangerous mode: bypass all permission checks
 run-dangerous:
-	@$(RALPH_DIR)/ralph.sh --tool claude --dangerous --project-dir $(PROJECT_DIR) $(N)
+	@$(RALPH_DIR)/ralph.sh --tool claude --model $(MODEL) --dangerous --project-dir $(PROJECT_DIR) $(N)
 
 # Alternative: run with Amp
 run-amp:
@@ -84,6 +92,7 @@ install-skills-codex:
 
 # Show PRD completion status
 status:
+	$(require_prd)
 	@echo ""
 	@echo "PRD Status: $$(jq -r '.project' $(PRD_FILE))"
 	@echo "Branch:     $$(jq -r '.branchName' $(PRD_FILE))"
@@ -102,6 +111,7 @@ progress:
 
 # Reset progress but keep PRD
 reset:
+	$(require_prd)
 	@echo "Resetting progress..."
 	@jq '.userStories |= map(.passes = false | .notes = "")' $(PRD_FILE) > $(PRD_FILE).tmp && mv $(PRD_FILE).tmp $(PRD_FILE)
 	@echo "# Ralph Progress Log" > $(PROGRESS_FILE)
