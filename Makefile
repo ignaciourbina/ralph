@@ -10,8 +10,9 @@ PROGRESS_FILE := $(RALPH_DIR)/progress.txt
 
 # Default iterations
 N ?= 27
-# Project directory (defaults to parent of ralph/)
-PROJECT_DIR ?= $(shell dirname $(RALPH_DIR))
+# Project directory. Ralph is a git submodule here (tooling/ralph), so the repo
+# root is the superproject working tree, not the parent dir of ralph/.
+PROJECT_DIR ?= $(shell git -C $(RALPH_DIR) rev-parse --show-superproject-working-tree)
 
 help:
 	@echo ""
