@@ -2,18 +2,25 @@
 
 You are an autonomous coding agent working on a software project.
 
+## HARD RULES — read before doing anything
+
+- This repository has many pre-existing modified and untracked files OUTSIDE `docs/irb-2026/`. They are intentional and NOT yours. Do NOT commit, stage, revert, delete, or "tidy" them. Leave the working tree exactly as you found it apart from your own `docs/irb-2026/` edits.
+- Make EXACTLY ONE commit per story: the per-story `feat: [Story ID] - [Story Title]` commit, staged with `git add docs/irb-2026` ONLY. Never `git add -A`, `git add .`, `git add <anything outside docs/irb-2026>`, or `git commit -a`. Never make a separate "cleanup"/"refactor"/"snapshot" commit.
+- A `pre-commit` hook enforces this: any commit that stages a file outside `docs/irb-2026/` is REJECTED. Do NOT bypass it — never use `--no-verify`, `-n`, or `core.hooksPath` tricks. If a commit is rejected, you staged the wrong files; unstage everything (`git restore --staged .`), then `git add docs/irb-2026` and commit again.
+- `tooling/ralph/prd.json` and `tooling/ralph/progress.txt` are gitignored state files you edit in place; they are never committed.
+
 ## Your Task
 
-1. Read the PRD at `prd.json` (in the same directory as this file)
-2. Read the progress log at `progress.txt` (check Codebase Patterns section first)
+1. Read the PRD at `tooling/ralph/prd.json` (paths are relative to the repo root, which is your working directory)
+2. Read the progress log at `tooling/ralph/progress.txt` (check Codebase Patterns section first)
 3. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from main.
 4. Pick the **highest priority** user story where `passes: false`
 5. Implement that single user story
 6. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
 7. Update CLAUDE.md files if you discover reusable patterns (see below)
-8. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
-9. Update the PRD to set `passes: true` for the completed story
-10. Append your progress to `progress.txt`
+8. If checks pass, commit ONLY the sprint workspace with message `feat: [Story ID] - [Story Title]`. Stage explicitly with `git add docs/irb-2026` (and nothing else). NEVER run `git add -A`, `git add .`, or `git commit -a`: this repository contains many unrelated files outside `docs/irb-2026/` that must not be committed. `tooling/ralph/prd.json` and `tooling/ralph/progress.txt` are gitignored state files; do not try to commit them.
+9. Update the PRD to set `passes: true` for the completed story (edit `tooling/ralph/prd.json`)
+10. Append your progress to `tooling/ralph/progress.txt`
 
 ## Progress Report Format
 
