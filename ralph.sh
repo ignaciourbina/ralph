@@ -73,11 +73,8 @@ else
   require_cmd claude
 fi
 
-# Strip ralph's own .git ONLY when ralph is a standalone clone (a real .git
-# directory), so commits go to the parent project. When ralph is a git
-# submodule its .git is a gitlink *file* (gitdir: ...); deleting it breaks the
-# submodule registration, so never touch the file case.
-if [ -d "$SCRIPT_DIR/.git" ] && [ ! -f "$SCRIPT_DIR/.git" ]; then
+# Strip ralph's own .git so commits go to the parent project
+if [ -d "$SCRIPT_DIR/.git" ]; then
   echo "Stripping .git from ralph directory (commits should go to parent project)"
   rm -rf "$SCRIPT_DIR/.git"
 fi
