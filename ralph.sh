@@ -136,7 +136,12 @@ else
   require_cmd claude
 fi
 
-# Resolve project directory: explicit flag > parent of ralph/
+# Resolve project directory: explicit flag > superproject working tree > parent
+# of ralph/. The superproject query answers only when ralph is a submodule, and
+# must run before the .git strip below while the gitlink is still readable.
+if [[ -z "$PROJECT_DIR" ]]; then
+  PROJECT_DIR=$(git -C "$SCRIPT_DIR" rev-parse --show-superproject-working-tree 2>/dev/null || true)
+fi
 PROJECT_DIR="${PROJECT_DIR:-$(dirname "$SCRIPT_DIR")}"
 [[ -d "$PROJECT_DIR" ]] || die "Project directory does not exist: $PROJECT_DIR"
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"  # resolve to absolute path
