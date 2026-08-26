@@ -12,8 +12,13 @@ PROGRESS_FILE := $(RALPH_DIR)/progress.txt
 N ?= 27
 # Claude model for non-interactive runs
 MODEL ?= claude-fable-5
-# Project directory (defaults to parent of ralph/)
-PROJECT_DIR ?= $(shell dirname $(RALPH_DIR))
+# Project directory. When ralph is installed as a submodule (e.g. tooling/ralph)
+# the project root is the superproject working tree, not ralph's parent dir.
+# That command prints nothing for a standalone clone, hence the fallback.
+PROJECT_DIR ?= $(shell git -C $(RALPH_DIR) rev-parse --show-superproject-working-tree 2>/dev/null)
+ifeq ($(strip $(PROJECT_DIR)),)
+PROJECT_DIR := $(shell dirname $(RALPH_DIR))
+endif
 
 # Guard for targets that need an existing PRD
 define require_prd
