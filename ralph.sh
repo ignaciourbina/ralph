@@ -245,9 +245,13 @@ elif [[ -f "$PRD_FILE" ]]; then
 
   if [[ ${#INFRA_REPAIRED[@]} -gt 0 ]]; then
     echo "Preflight: restored ${#INFRA_REPAIRED[@]} infrastructure file(s) from $BASE_BRANCH: ${INFRA_REPAIRED[*]}"
-    git -C "$PROJECT_DIR" commit -m "fix(preflight): restore infrastructure files from $BASE_BRANCH
+    # Restoring a deleted file to its committed content stages nothing, so
+    # only commit when the index actually changed.
+    if ! git -C "$PROJECT_DIR" diff --cached --quiet 2>/dev/null; then
+      git -C "$PROJECT_DIR" commit -m "fix(preflight): restore infrastructure files from $BASE_BRANCH
 
 Restored: ${INFRA_REPAIRED[*]}" >/dev/null 2>&1 || warn "Could not commit the restored infrastructure files."
+    fi
   fi
   if [[ ${#INFRA_FAILED[@]} -gt 0 ]]; then
     die "Could not restore infrastructure files from $BASE_BRANCH: ${INFRA_FAILED[*]}"
